@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploaded Files</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1>Uploaded Files</h1>
+    <ul id="file-list"></ul>
+
+    <h2>Download a File</h2>
+    <form id="download-form">
+        <input type="text" id="fileId" placeholder="File ID" required />
+        <input type="text" id="key" placeholder="Encryption Key" required />
+        <button type="submit">Download</button>
+    </form>
+
+    <script>
+        // Fetch files list
+        fetch('/files')
+            .then(res => res.json())
+            .then(data => {
+                const fileList = document.getElementById('file-list');
+                data.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = `${file.originalName} (ID: ${file.fileId})`;
+                    fileList.appendChild(li);
+                });
+            });
+
+        // Handle download
+        document.getElementById('download-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileId = document.getElementById('fileId').value;
+            const encryptedAesKey = document.getElementById('key').value;
+
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId, encryptedAesKey }),
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'downloaded-file';
+                link.click();
+            } else {
+                alert(await response.text());
+            }
+        });
+    </script>
+</body>
+</html>
